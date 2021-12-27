@@ -1,2 +1,5 @@
 pylint==2.12.2
 selenium
+pandas
+numpy
+scikit-learn
