@@ -14,30 +14,26 @@ def normalize_per_gp(df: pandas.DataFrame, columns: Sequence[str]) -> pandas.Dat
 
     for col in columns:
         df[f"{col}/GP"] = df[col].astype(float) / games_played
+        df[f"{col}/GP/max"] = df[f"{col}/GP"] / df[f"{col}/GP"].max()
+        df.drop(f"{col}/GP", 1)
 
     df = drop_columns(df, columns)
 
     return df
 
 
-def prepare(df: pandas.DataFrame) -> pandas.DataFrame:
+def extract_features(df: pandas.DataFrame) -> pandas.DataFrame:
     df = df[df["S%"] != '--']
-    #df = df[df["P"] != 0]
-    #df = df[df["GP"] > 4]
+    df = df[df["GP"] > 4]
+    df = df[df["P"] > 0]
 
     df["EVA"] = df["EVP"] - df["EVG"]
     df["PPA"] = df["PPP"] - df["PPG"]
 
     df["Forward"] = df["Pos"].isin(['C', 'L', 'R']).astype(int)
-    #df["Def"] = (df["Pos"] == 'D').astype(int)
 
     df = normalize_per_gp(df, ["EVA", "EVG", "PPA", "PPG", "S"])
-    #df = normalize_per_gp(df, ["S"])
     df["S%"] = df["S%"].astype(float) / 100
-
-    #df = drop_columns(df, ["Season", "#", "FOW%", "G", "A", "P", "Shoots",
-    #                       "Pos", "EVP", "SHP", "PPP", "OTG", "GWG", "EVG",  "PPG",
-    #                       "Team", "TOI/GP", "GP", "SHG",  "+/-", "PIM"])
 
     df = drop_columns(df, ["Season", "#", "FOW%", "G", "A", "P", "Shoots",
                            "Pos", "EVP", "SHP", "PPP", "P/GP", "OTG", "GWG",

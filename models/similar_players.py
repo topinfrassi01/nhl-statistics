@@ -1,6 +1,6 @@
 import pandas
 from typing import Tuple, Dict, Union
-from data_preparation.prepare_data_knn import prepare
+from predict_points_from_comparable.prepare_dataframe import prepare
 from sklearn.neighbors import NearestNeighbors
 from pathlib import Path
 from operator import itemgetter

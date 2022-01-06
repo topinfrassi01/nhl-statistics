@@ -1,9 +1,11 @@
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import ElementClickInterceptedException
 import math
 import csv
 from pathlib import Path
+from time import sleep
 
 CSV_HEADERS = ["#", "Player", "Season", "Team", "Shoots", "Pos", "GP", "G", "A", "P", "+/-", "PIM", "P/GP", "EVG", "EVP",
               "PPG", "PPP", "SHG", "SHP", "OTG", "GWG",
@@ -16,17 +18,31 @@ def scrape_nhl_standings(csv_dump_path, season):
         for year in range(season[0], season[1]):
             driver.get(build_url(year))
 
+            sleep(2)
             set_page_size_to_100(driver)
 
             players_standings = []
-            driver.implicitly_wait(100)
+            sleep(2)
             next_page_button = driver.find_element(By.CLASS_NAME, "-next").find_element(By.TAG_NAME, "button")
+
+            accepted_cookies = False
+            if len(driver.find_elements(By.ID, 'onetrust-accept-btn-handler')) > 0:
+                driver.find_elements(By.ID, 'onetrust-accept-btn-handler')[0].click()
+                accepted_cookies = True
+
 
             while next_page_button.get_attribute("disabled") is None:
                 table_standings_page = driver.find_element(By.CLASS_NAME, "rt-tbody")
+                sleep(2)
+
+                if not accepted_cookies and len(driver.find_elements(By.ID, 'onetrust-accept-btn-handler')) > 0:
+                    driver.find_elements(By.ID, 'onetrust-accept-btn-handler')[0].click()
+                    accepted_cookies = True
+
                 players_standings += parse_standings_page(table_standings_page.text)
                 next_page_button.click()
-                driver.implicitly_wait(100)
+
+                sleep(2)
                 next_page_button = driver.find_element(By.CLASS_NAME, "-next").find_element(By.TAG_NAME, "button")
 
             write_to_csv(csv_dump_path, players_standings, year)
@@ -84,5 +100,5 @@ if __name__ == "__main__":
     if not csv_path.exists():
         csv_path.mkdir()
 
-    for i in range(2015,2022):
+    for i in range(2005,2022):
         scrape_nhl_standings(csv_path, season=(i, i+1))

@@ -3,3 +3,5 @@ selenium
 pandas
 numpy
 scikit-learn
+matplotlib
+progressbar2
