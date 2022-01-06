@@ -7,6 +7,7 @@ from operator import itemgetter
 from dataclasses import dataclass
 import progressbar
 import numpy as np
+from statistics import mean
 
 @dataclass
 class ComparablePlayer:
@@ -115,6 +116,7 @@ def create_nearest_neighbors_for_n_years_stats_sequences(n_years_sequences: Sequ
 def find_comparables_from_last_sequence(nearest_neighbors : Sequence[NearestNeighbors],
                                         n_years_sequences : Sequence[pandas.DataFrame],
                                         seasons_names_ordered : Sequence[str],
+                                        n_years : int,
                                         searched_player_stats_over_last_n_years: Union[pandas.DataFrame, pandas.Series]) \
         -> Sequence[ComparablePlayer]:
     """
@@ -122,6 +124,7 @@ def find_comparables_from_last_sequence(nearest_neighbors : Sequence[NearestNeig
     :param nearest_neighbors:
     :param n_years_sequences:
     :param seasons_names_ordered:
+    :param n_years:
     :param searched_player_stats_over_last_n_years:
     :return:
     """
@@ -138,7 +141,7 @@ def find_comparables_from_last_sequence(nearest_neighbors : Sequence[NearestNeig
     closest_comparables = []
     for dist, player_id, sequence_id in neighbors_raw:
         player_name = n_years_sequences[sequence_id].iloc[player_id].name
-        season_range = seasons_names_ordered[sequence_id:sequence_id+n_neighbors]
+        season_range = seasons_names_ordered[sequence_id:sequence_id + n_years]
 
         closest_comparables.append(ComparablePlayer(player_name, season_range))
 
@@ -162,6 +165,7 @@ def get_comparables_for_all_players_in_last_n_years(yearly_statistics: Sequence[
         comparables = find_comparables_from_last_sequence(nearest_neighbors_per_sequence,
                                             players_features_aggregated_over_n_years_sequences,
                                             seasons_name_ordered,
+                                            3,
                                             player_stats_from_last_sequence)
 
         comparables_per_player[str(player_name)] = comparables
@@ -200,24 +204,18 @@ def build_pgp_prediction_features_from_comparables(comparables_per_player : Dict
             features_for_player.append(_maybe_extract_pgp_from_df(stats_per_season[observed_season], name))
 
         for comparable in comparables:
+            comparable_stats = []
             for season in comparable.seasons_range:
-                features_for_player.append(_maybe_extract_pgp_from_df(stats_per_season[season], comparable.name))
+                comparable_stats.append(_maybe_extract_pgp_from_df(stats_per_season[season], comparable.name))
 
             last_observed_season_first_year = int(comparable.seasons_range[-1].split('-')[0])
             next_season = f'{last_observed_season_first_year+1}-{str(last_observed_season_first_year+2)[-2:]}'
 
-            features_for_player.append(_maybe_extract_pgp_from_df(stats_per_season[next_season], comparable.name))
+            features_for_player.append(_maybe_extract_pgp_from_df(stats_per_season[next_season], comparable.name) - mean(comparable_stats))
 
         features_for_player.append(_maybe_extract_pgp_from_df(last_finished_season, name))
 
         features_set.append(features_for_player)
-
-    for i,f in enumerate(features_set):
-        if not len(f) == 16:
-            raise Exception()
-
-        if len(list(filter(lambda x: not isinstance(x, float), f))) > 0:
-            raise Exception
 
     return np.array(features_set, np.float32)
 
@@ -233,7 +231,8 @@ def main():
     seasons_names_ordered = sorted([x["Season"][0] for x in yearly_stats],
                                    key=lambda x: int(x.split('-')[0]))
 
-    comparables_per_player = get_comparables_for_all_players_in_last_n_years(yearly_stats, seasons_names_ordered, 3, 3, add_progressbar=True)
+    comparables_per_player = get_comparables_for_all_players_in_last_n_years(yearly_stats, seasons_names_ordered,
+                                                                             n_neighbors=3, n_years=3, add_progressbar=False)
 
     stats_per_season = {x[0]:x[1] for x in zip(seasons_names_ordered, yearly_stats)}
 

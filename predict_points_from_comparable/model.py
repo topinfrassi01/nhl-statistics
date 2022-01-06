@@ -1,3 +1,4 @@
+from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
 from sklearn.model_selection import KFold
 from sklearn.metrics import r2_score
@@ -20,9 +21,9 @@ def main():
         X_train, X_test = X[train_id], X[test_id]
         y_train, y_test = y[train_id], y[test_id]
 
-        svr = SVR(kernel='linear', C=1).fit(X_train, y_train)
+        model = LinearRegression().fit(X_train, y_train)
 
-        r2_pred = r2_score(y_test, svr.predict(X_test))
+        r2_pred = r2_score(y_test, model.predict(X_test))
 
         # The 2nd feature of the dataset is the number of points in the last season
         r2_baseline = r2_score(y_test, X_test[:, 2])

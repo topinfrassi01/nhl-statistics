@@ -15,7 +15,7 @@ def normalize_per_gp(df: pandas.DataFrame, columns: Sequence[str]) -> pandas.Dat
     for col in columns:
         df[f"{col}/GP"] = df[col].astype(float) / games_played
         df[f"{col}/GP/max"] = df[f"{col}/GP"] / df[f"{col}/GP"].max()
-        df.drop(f"{col}/GP", 1)
+        df.drop(f"{col}/GP", axis=1)
 
     df = drop_columns(df, columns)
 
@@ -24,9 +24,10 @@ def normalize_per_gp(df: pandas.DataFrame, columns: Sequence[str]) -> pandas.Dat
 
 def extract_features(df: pandas.DataFrame) -> pandas.DataFrame:
     df = df[df["S%"] != '--']
-    df = df[df["GP"] > 4]
+    df = df[df["GP"] > 8]
     df = df[df["P"] > 0]
 
+    df["TOI/GP"] = df["TOI/GP"].apply(lambda x: int(x.split(':')[0])*60+int(x.split(':')[1])) / 3600
     df["EVA"] = df["EVP"] - df["EVG"]
     df["PPA"] = df["PPP"] - df["PPG"]
 
