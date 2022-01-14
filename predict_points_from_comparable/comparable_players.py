@@ -225,8 +225,6 @@ def main():
 
     stats_path = Path('D:/Repositories/nhl-statistics/statistics')
 
-    # TODO : Retirer les joueurs doublons.
-
     yearly_stats = create_dataframes_from_csv(stats_path, '2020-2021')
     seasons_names_ordered = sorted([x["Season"][0] for x in yearly_stats],
                                    key=lambda x: int(x.split('-')[0]))
