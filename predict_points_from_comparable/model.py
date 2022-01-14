@@ -1,13 +1,9 @@
 from sklearn.linear_model import LinearRegression
-from sklearn.svm import SVR
 from sklearn.model_selection import KFold
 from sklearn.metrics import r2_score
 import pickle
 from statistics import mean
-import numpy as np
 
-def build_model(pickle_path):
-    pass
 
 def main():
     features = pickle.load(open('prediction_features_ds.dat', 'rb'))
